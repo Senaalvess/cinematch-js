@@ -1,4 +1,6 @@
-// CineMatch JS - Versão 6.0
+// CineMatch JS - Versão 7.0
+
+const { waitForDebugger } = require("inspector");
 
 // Altera a codificação do terminal para UTF-8
 require("child_process").execSync("chcp 65001", { stdio: "ignore" });
@@ -49,6 +51,43 @@ const catalogo = [
   new Conteudo("Paulo, Apóstolo de Cristo", "Filme", ["Drama", "Biografia"], 108)
 ];
 
+//RF13 - Clousure
+function criarContadorDeRecomendacoes(){
+  let total = 0;
+  return function () {
+    total++;
+    console.log(`Total de recomendações: ${total}`)
+  };
+}
+
+const contarRecomendacao = criarContadorDeRecomendacoes();
+
+// RF12 - Callback
+function finalizarOnboarding(nomeUsuario, callback) {
+  console.log(`\nOnboarding finalizado com sucesso!`);
+  callback(nomeUsuario);
+}
+
+function exibirMensagemFinal(nome) {
+  console.log(`${nome}, aproveite sua maratona!`);
+}
+
+// RF14 - Promise e aync/await
+function buscarCatalogoSimulado(catalogo) {
+  return new Promise((resolve) => {
+    console.log(`\nCarregando catálogo ...`);
+    setTimeout(() => {
+      console.log(`Catálogo carregado com sucesso!!!`);
+      resolve(catalogo);
+    }, 1500);
+  });
+}
+
+async function iniciarSistema(catalogo) {
+  const catalogoCarregado = await buscarCatalogoSimulado(catalogo);
+  return catalogoCarregado;
+}
+
 // RF03 - Calcula compatibilidade, RF04 - Classificar compatibilidade e RF05 – Gêneros não explorados
 function calcularCompatibilidade(usuario, conteudo) {
   const generosUsuario = usuario.generosFavoritos.map((g) => g.toLowerCase());
@@ -77,60 +116,73 @@ function classificarCompatibilidade(percentual) {
   }
 }
 
-// RF08 - Métodos de array
-function calcularCompatibilidades(usuario, catalogo) {
-  const resultados = catalogo.map((conteudo) =>
+// RF06 - Encontrar melhor conteúdo
+function encontrarMelhorConteudo(usuario, catalogo) {
+  const resultados = catalogo.map(conteudo =>
     calcularCompatibilidade(usuario, conteudo)
   );
+  const melhor = resultados.reduce((melhor, atual) =>
+    atual.percentual > melhor.percentual ? atual : melhor
+  );
 
-  console.log(`\nConteúdo compatível`);
-
-  resultados.forEach((r, index) => {
-    console.log(`${index + 1}. ${r.conteudo.exibirResumo()}`);
-    if (r.conteudo instanceof Serie) {
-      console.log(`    ${r.conteudo.exibirTemporadas()}`);
-    }
-    console.log(`${r.percentual}% - ${classificarCompatibilidade(r.percentual)}`);
-    console.log(`Gêneros em comum: ${r.comuns.join(", ") || "Nenhum"}`);
-    console.log(`Não explorados: ${r.faltantes.join(", ") || "Nenhum"}`);
-    console.log("");
-  });
-
-  const altaAfinidade = resultados.filter(r => r.percentual >= 80);
-  if (altaAfinidade.length > 0) {
-    console.log(`Conteúdos com Alta Afinidade:`);
-    altaAfinidade.forEach(r => {
-      console.log(`   - ${r.conteudo.titulo} (${r.percentual}%)`);
-    });
-  }
-  return resultados;
+  return melhor;
 }
 
-console.log(`================================================================`);
-console.log(`                        CineMatch JS                            `);
-console.log(`================================================================`);
-console.log(`\n   Bem vindo! ao Sistema de Recomendação de Filmes e Séries   `);
+// RF07 - Recomendação personalizada
+function gerarRecomendacaoPersonaliza(usuario, resultado) {
+  console.log(`\nRecomendação personalizada para ${usuario.nome}:`);
 
-// RF01 – Cria o perfil da pessoa usuária via terminal
-console.log(`\n                Vamos criar seu perfil!                     \n`);
+  if(resultado.faltantes.length > 0) {
+    const proximoGenero = resultado.faltantes[0];
+    const generoConhecido = resultado.comuns[0] || usuario.generosFavoritos[0];
+    console.log(`Você já curte "${generoConhecido}"`);
+    console.log(`Que tal arriscar um pouco de "${proximoGenero}"?`);
+    console.log(`"${resultado.conteudo.titulo}" pode ser ótimo!`);
+  } else {
+    console.log(`"${resultado.conteudo.titulo}" é perfeito pra você!`);
+  }
+}
 
-const nome = prompt("Qual é o seu nome? ");
-const idade = Number(prompt("Qual é a sua idade? "));
-const generosInput = prompt(
-  "Quais gêneros você mais gosta? (separe por vírgula): ",
-);
+async function main() {
+  console.log(`\n                      CineMatch JS                          \n`);
+  console.log(`\n   Bem vindo! ao Sistema de Recomendação de Filmes e Séries   `);
 
-// Cria objeto usuario
-const usuario = {
-  nome: nome,
-  idade: idade,
-  generosFavoritos: generosInput
-      .split(",")
-      .map((g) => g.trim())
-      .filter((g) => g.length > 0)
-};
+  // RF01 – Cria o perfil da pessoa usuária via terminal
+  console.log(`\n                Vamos criar seu perfil!                     \n`);
 
-console.log(`\nOlá, ${usuario.nome}!`);
-console.log(`Você gosta de: ${usuario.generosFavoritos.join(", ")}`);
+  const nome = prompt("Qual é o seu nome? ");
+  const idade = Number(prompt("Qual é a sua idade? "));
+  const generosInput = prompt(
+    "Quais gêneros você mais gosta? (separe por vírgula): ",
+  );
 
-calcularCompatibilidades(usuario, catalogo);
+  // Cria objeto usuario
+  const usuario = {
+    nome: nome,
+    idade: idade,
+    generosFavoritos: generosInput
+        .split(",")
+        .map((g) => g.trim())
+        .filter((g) => g.length > 0)
+  };
+
+  console.log(`\nOlá, ${usuario.nome}!`);
+  console.log(`Você gosta de: ${usuario.generosFavoritos.join(", ")}`);
+
+  finalizarOnboarding(usuario.nome, exibirMensagemFinal);
+
+  const catalogoCarregado = await iniciarSistema(catalogo);
+
+  const melhor = encontrarMelhorConteudo(usuario, catalogoCarregado);
+
+  console.log(`\nRecomendação Principal:`);
+  console.log(`${melhor.conteudo.titulo} (${melhor.conteudo.tipo})`);
+  console.log(`Compatibilidade: ${melhor.percentual}%`);
+  console.log(`${classificarCompatibilidade(melhor.percentual)}`);
+
+  gerarRecomendacaoPersonaliza(usuario, melhor);
+
+  contarRecomendacao(); 
+}
+
+main();
