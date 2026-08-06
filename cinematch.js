@@ -1,4 +1,4 @@
-// CineMatch JS - Versão 4.0
+// CineMatch JS - Versão 5.0
 
 // Altera a codificação do terminal para UTF-8
 require("child_process").execSync("chcp 65001", { stdio: "ignore" });
@@ -6,7 +6,6 @@ const prompt = require("prompt-sync")({ sigint: true });
 
 // RF02 - Cria um catálogo de conteúdos
 const catalogo = [
-  // Séries
   {
     id: 1,
     titulo: "The Walking Dead",
@@ -27,7 +26,7 @@ const catalogo = [
     id: 3,
     titulo: "Stranger Things",
     tipo: "Série",
-    generos: ["Animação", "Ficção Científica", "Mistério"],
+    generos: ["Ficção Científica", "Mistério"],
     duracaoMinutos: 50,
     temporadas: 5,
   },
@@ -47,8 +46,6 @@ const catalogo = [
     duracaoMinutos: 49,
     temporadas: 5,
   },
-
-  // Filmes
   {
     id: 6,
     titulo: "O Poderoso Chefão",
@@ -121,28 +118,24 @@ const catalogo = [
   },
 ];
 
-// RF03 - Calcula compatibilidade com cada conteúdo
-// RF05 – Gêneros não explorados
+// RF03 - Calcula compatibilidade, RF04 - Classificar compatibilidade e RF05 – Gêneros não explorados
 function calcularCompatibilidade(usuario, conteudo) {
   const generosUsuario = usuario.generosFavoritos.map((g) => g.toLowerCase());
   const generosConteudo = conteudo.generos;
+
   const comuns = generosConteudo.filter((g) =>
     generosUsuario.includes(g.toLowerCase()),
   );
+
   const faltantes = generosConteudo.filter(
     (g) => !generosUsuario.includes(g.toLowerCase()),
   );
+
   const percentual = Math.round((comuns.length / generosConteudo.length) * 100);
 
-  return {
-    conteudo,
-    percentual,
-    comuns,
-    faltantes,
-  };
+  return { conteudo, percentual, comuns, faltantes };
 }
 
-// RF04 - Classificar compatibilidade
 function classificarCompatibilidade(percentual) {
   if (percentual >= 80) {
     return "Alta afinidade";
@@ -151,6 +144,46 @@ function classificarCompatibilidade(percentual) {
   } else {
     return "Baixa afinidade";
   }
+}
+
+// RF08 - Métodos de array
+function calcularCompatibilidades(usuario, catalogo) {
+  const resultados = catalogo.map((conteudo) =>
+    calcularCompatibilidade(usuario, conteudo),
+  );
+
+  console.log(`\nConteúdo compatível`);
+
+  resultados.forEach((r, index) => {
+    console.log(`${index + 1}. ${r.conteudo.titulo} (${r.conteudo.tipo})`);
+    console.log(
+      `${r.percentual}% - ${classificarCompatibilidade(r.percentual)}`,
+    );
+    console.log(`Gêneros em comum: ${r.comuns.join(", ") || "Nenhum"}`);
+    console.log(`Não explorados: ${r.faltantes.join(", ") || "Nenhum"}`);
+    console.log("");
+  });
+
+  const altaAfinidade = resultados.filter((r) => r.percentual >= 80);
+
+  if (altaAfinidade.length > 0) {
+    console.log(`CONTEÚDOS COM ALTA AFINIDADE (${altaAfinidade.length}):`);
+    altaAfinidade.forEach((r) => {
+      console.log(`   - ${r.conteudo.titulo} (${r.percentual}%)`);
+    });
+  }
+
+  const temConteudoPerfeito = resultados.some((r) => r.percentual === 100);
+  if (temConteudoPerfeito) {
+    console.log("\n100% de compatibilidade!");
+  }
+
+  const totalCompatibilidade = resultados.reduce(
+    (acc, r) => acc + r.percentual, 0);
+  const media = Math.round(totalCompatibilidade / resultados.length);
+  console.log(`\nMédia de compatibilidade: ${media}%`);
+
+  return resultados;
 }
 
 console.log(`================================================================`);
@@ -164,36 +197,16 @@ console.log(`\n                Vamos criar seu perfil!                     \n`);
 const nome = prompt("Qual é o seu nome? ");
 const idade = Number(prompt("Qual é a sua idade? "));
 const generosInput = prompt(
-  "Quais gêneros você mais gosta? (separe por vírgula, ex: Ação, Comédia, Terror): ",
+  "Quais gêneros você mais gosta? (separe por vírgula): ",
 );
 
 // Cria objeto usuario
 const usuario = {
   nome: nome,
   idade: idade,
-  generosFavoritos: generosInput
-    .split(",")
-    .map((g) => g.trim())
-    .filter((g) => g.length > 0),
-};
+  generosFavoritos: generosInput.split(",").map((g) => g.trim()).filter((g) => g.length > 0)};
 
 console.log(`\nOlá, ${usuario.nome}!`);
-console.log(`Você gosta de: ${usuario.generosFavoritos.join(', ')}`);
+console.log(`Você gosta de: ${usuario.generosFavoritos.join(", ")}`);
 
-console.log('\nConteúdo compatível:\n');
-
-catalogo.forEach(conteudo => {
-  const resultado = calcularCompatibilidade(usuario, conteudo);
-  
-  console.log(`${resultado.conteudo.titulo} (${resultado.conteudo.tipo})`);
-  console.log(`Compatibilidade: ${resultado.percentual}%`);
-  console.log(`${classificarCompatibilidade(resultado.percentual)}`);
-  console.log(`Gêneros em comum: ${resultado.comuns.join(', ') || 'Nenhum'}`);
- 
-  if (resultado.faltantes.length > 0) {
-    console.log(`Gêneros não explorados: ${resultado.faltantes.join(', ')}`);
-  } else {
-    console.log(`Você curte TODOS os gêneros!`);
-  }
-  console.log('');
-});
+calcularCompatibilidades(usuario, catalogo);
