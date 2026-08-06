@@ -1,4 +1,4 @@
-// CineMatch JS - Versão 3.0
+// CineMatch JS - Versão 4.0
 
 // Altera a codificação do terminal para UTF-8
 require("child_process").execSync("chcp 65001", { stdio: "ignore" });
@@ -121,17 +121,36 @@ const catalogo = [
   },
 ];
 
-// Função de exibir o catálogo
-function exibirCatalogo() {
-  console.log(`\n Catálogo de Conteúdos:`);
-  catalogo.forEach((conteudo, index) => {
-    console.log(`\n${index + 1}. ${conteudo.titulo} (${conteudo.tipo})`);
-    console.log(`   Gêneros: ${conteudo.generos.join(", ")}`);
-    console.log(`   Duração: ${conteudo.duracaoMinutos} min`);
-    if (conteudo.temporadas) {
-      console.log(`   Temporadas: ${conteudo.temporadas}`);
-    }
-  });
+// RF03 - Calcula compatibilidade com cada conteúdo
+// RF05 – Gêneros não explorados
+function calcularCompatibilidade(usuario, conteudo) {
+  const generosUsuario = usuario.generosFavoritos.map((g) => g.toLowerCase());
+  const generosConteudo = conteudo.generos;
+  const comuns = generosConteudo.filter((g) =>
+    generosUsuario.includes(g.toLowerCase()),
+  );
+  const faltantes = generosConteudo.filter(
+    (g) => !generosUsuario.includes(g.toLowerCase()),
+  );
+  const percentual = Math.round((comuns.length / generosConteudo.length) * 100);
+
+  return {
+    conteudo,
+    percentual,
+    comuns,
+    faltantes,
+  };
+}
+
+// RF04 - Classificar compatibilidade
+function classificarCompatibilidade(percentual) {
+  if (percentual >= 80) {
+    return "Alta afinidade";
+  } else if (percentual >= 50) {
+    return "Média afinidade";
+  } else {
+    return "Baixa afinidade";
+  }
 }
 
 console.log(`================================================================`);
@@ -158,12 +177,23 @@ const usuario = {
     .filter((g) => g.length > 0),
 };
 
-// Exibe as informações do perfil
-console.log(`\nPerfil criado com sucesso!`);
-console.log(`\nOlá, ${usuario.nome}`);
-console.log(`Você gosta de: ${usuario.generosFavoritos.join(", ")}`);
-console.log(`Idade: ${usuario.idade} anos`);
+console.log(`\nOlá, ${usuario.nome}!`);
+console.log(`Você gosta de: ${usuario.generosFavoritos.join(', ')}`);
 
-// Exibe o Catálogo
-exibirCatalogo();
-console.log(`\n Total de conteúdos: ${catalogo.length}`);
+console.log('\nConteúdo compatível:\n');
+
+catalogo.forEach(conteudo => {
+  const resultado = calcularCompatibilidade(usuario, conteudo);
+  
+  console.log(`${resultado.conteudo.titulo} (${resultado.conteudo.tipo})`);
+  console.log(`Compatibilidade: ${resultado.percentual}%`);
+  console.log(`${classificarCompatibilidade(resultado.percentual)}`);
+  console.log(`Gêneros em comum: ${resultado.comuns.join(', ') || 'Nenhum'}`);
+ 
+  if (resultado.faltantes.length > 0) {
+    console.log(`Gêneros não explorados: ${resultado.faltantes.join(', ')}`);
+  } else {
+    console.log(`Você curte TODOS os gêneros!`);
+  }
+  console.log('');
+});
