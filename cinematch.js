@@ -1,4 +1,4 @@
-// CineMatch JS - Versão 7.0
+// CineMatch JS - Versão 7.1
 
 const { waitForDebugger } = require("inspector");
 
@@ -56,7 +56,7 @@ function criarContadorDeRecomendacoes(){
   let total = 0;
   return function () {
     total++;
-    console.log(`Total de recomendações: ${total}`)
+    console.log(`Total de recomendações: ${total}\n`)
   };
 }
 
@@ -77,7 +77,7 @@ function buscarCatalogoSimulado(catalogo) {
   return new Promise((resolve) => {
     console.log(`\nCarregando catálogo ...`);
     setTimeout(() => {
-      console.log(`Catálogo carregado com sucesso!!!`);
+      console.log(`\nCatálogo carregado com sucesso!!!`);
       resolve(catalogo);
     }, 1500);
   });
@@ -129,17 +129,22 @@ function encontrarMelhorConteudo(usuario, catalogo) {
 }
 
 // RF07 - Recomendação personalizada
-function gerarRecomendacaoPersonaliza(usuario, resultado) {
-  console.log(`\nRecomendação personalizada para ${usuario.nome}:`);
+function gerarRecomendacaoPersonaliza(usuario, melhorResultado, catalogo) {
+  console.log(`\nRecomendação personalizada para ${usuario.nome}:\n`);
 
-  if(resultado.faltantes.length > 0) {
-    const proximoGenero = resultado.faltantes[0];
-    const generoConhecido = resultado.comuns[0] || usuario.generosFavoritos[0];
-    console.log(`Você já curte "${generoConhecido}"`);
-    console.log(`Que tal arriscar um pouco de "${proximoGenero}"?`);
-    console.log(`"${resultado.conteudo.titulo}" pode ser ótimo!`);
-  } else {
-    console.log(`"${resultado.conteudo.titulo}" é perfeito pra você!`);
+  const outros = catalogo.filter(c => c.titulo !== melhorResultado.conteudo.titulo);
+
+  const sugerido = outros.find(c => 
+    c.generos.some(g => !usuario.generosFavoritos.includes(g))
+  );
+
+  if(sugerido) {
+   const generoNovo = sugerido.generos.find(g => 
+    !usuario.generosFavoritos.includes(g));
+    console.log(`Então você curte "${usuario.generosFavoritos[0]}"? Que tal arriscar um poco de "${generoNovo}"?`);
+    console.log(`"${sugerido.titulo}" pode ser uma ótima escolha!\n`);
+    } else {
+      console.log(`Você já explorou todos os gêneros!\n`);
   }
 }
 
@@ -175,12 +180,12 @@ async function main() {
 
   const melhor = encontrarMelhorConteudo(usuario, catalogoCarregado);
 
-  console.log(`\nRecomendação Principal:`);
+  console.log(`\nRecomendação Principal:\n`);
   console.log(`${melhor.conteudo.titulo} (${melhor.conteudo.tipo})`);
   console.log(`Compatibilidade: ${melhor.percentual}%`);
   console.log(`${classificarCompatibilidade(melhor.percentual)}`);
 
-  gerarRecomendacaoPersonaliza(usuario, melhor);
+  gerarRecomendacaoPersonaliza(usuario, melhor, catalogoCarregado);
 
   contarRecomendacao(); 
 }
