@@ -154,15 +154,15 @@ Requisitos Funcionais (RF)
 
 ## Vídeo de demonstração
 
-LINK
+Acesso:
 
 ## Quadro Kanban
 
-LINK
+Acesso: https://trello.com/b/r0qLb2Yc
 
 ## Desenvolvido por
 
-Luiz Paulo de Sena Alves - LINK
+Luiz Paulo - https://github.com/Senaalvess
 
 ## Licença
 

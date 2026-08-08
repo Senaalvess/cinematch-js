@@ -188,6 +188,6 @@ async function main() {
   gerarRecomendacaoPersonaliza(usuario, melhor, catalogoCarregado);
 
   contarRecomendacao(); 
-}
+''}
 
 main();
