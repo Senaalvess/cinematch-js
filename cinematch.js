@@ -1,4 +1,4 @@
-// CineMatch JS - Versão 8.0
+// CineMatch JS - Versão 8.1
 
 // Altera a codificação do terminal para UTF-8, apenas no windows
 if (process.platform === "win32") {
@@ -107,7 +107,7 @@ function calcularCompatibilidade(usuario, conteudo) {
     (g) => !generosUsuario.includes(g.toLowerCase()),
   );
 
-  const percentual = Math.round((comuns.length / generosConteudo.length) * 100);
+  const percentual = Math.round((comuns.length / generosUsuario.length) * 100);
 
   return { conteudo, percentual, comuns, faltantes };
 }
@@ -170,16 +170,30 @@ function encontrarMelhorConteudo(usuario, catalogo) {
 }
 
 // RF07 - Recomendação personalizada
-function gerarRecomendacaoPersonalizada(usuario, resultado) {
+function gerarRecomendacaoPersonalizada(usuario, resultado, catalogo) {
   console.log(`\nRecomendação personalizada para ${usuario.nome}:\n`);
 
   if (resultado.faltantes.length > 0) {
     const proximoGenero = resultado.faltantes[0];
-    const generoConhecido = resultado.comuns[0] || usuario.generosFavoritos[0];
-    console.log(` Então você curte "${generoConhecido}"? Que tal arriscar um pouco de "${proximoGenero}"?`);
-    console.log(` "${resultado.conteudo.titulo}" pode ser uma ótima escolha!\n`);
+    
+    const outrosConteudos = catalogo.filter(c => 
+      c.titulo !== resultado.conteudo.titulo && 
+      c.generos.some(g => g.toLowerCase() === proximoGenero.toLowerCase())
+    );
+    
+    if (outrosConteudos.length > 0) {
+      const outro = outrosConteudos[0];
+      console.log(`Já que você gosta de "${resultado.conteudo.generos.join(', ')}", que tal explorar "${proximoGenero}" com "${outro.titulo}"?`);
+    } else {
+      console.log(`Infelizmente não temos outro conteúdo de "${proximoGenero}" no momento.`);
+    }
   } else {
-    console.log(` Você já explorou todos os gêneros!\n`);
+    console.log(`Você já explorou todos os gêneros disponíveis!`);
+    // Sugere algo aleatório
+    const aleatorio = catalogo.find(c => c.titulo !== resultado.conteudo.titulo);
+    if (aleatorio) {
+      console.log(`Que tal tentar "${aleatorio.titulo}"?`);
+    }
   }
 }
 
@@ -191,7 +205,7 @@ function exibirRecomendacaoPrincipal(usuario, catalogo) {
   console.log(`Compatibilidade: ${melhor.percentual}%`);
   console.log(`${classificarCompatibilidade(melhor.percentual)}`);
 
-  gerarRecomendacaoPersonalizada(usuario, melhor);
+  gerarRecomendacaoPersonalizada(usuario, melhor, catalogo);
 
   contarRecomendacao();
 }
