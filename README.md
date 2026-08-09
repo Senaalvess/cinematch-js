@@ -154,7 +154,7 @@ Requisitos Funcionais (RF)
 
 ## Vídeo de demonstração
 
-Acesso:
+Acesso: https://youtu.be/PXsDLy5ap2s
 
 ## Quadro Kanban
 
