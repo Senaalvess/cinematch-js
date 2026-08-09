@@ -176,7 +176,6 @@ function gerarRecomendacaoPersonalizada(usuario, resultado, catalogo) {
   if (resultado.faltantes.length > 0) {
     const proximoGenero = resultado.faltantes[0];
     
-    // Busca UM conteúdo DIFERENTE com o gênero faltante
     const outrosConteudos = catalogo.filter(c => 
       c.titulo !== resultado.conteudo.titulo && 
       c.generos.some(g => g.toLowerCase() === proximoGenero.toLowerCase())
